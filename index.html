@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Splitboard — Multi Stopwatch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Splitboard home">
+          <span class="brand-mark">S</span>
+          <span>splitboard</span>
+        </a>
+        <nav class="top-actions" aria-label="Utility navigation">
+          <button class="icon-button" aria-label="Toggle theme" id="theme-toggle">◐</button>
+          
+          
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="eyebrow">TEAM TIMEKEEPING</div>
+          <h1>Multi stopwatch</h1>
+          <p>Track every participant independently. Add a lap note the moment it happens.</p>
+        </section>
+
+        <section class="control-bar" aria-label="Global stopwatch controls">
+          <button class="button button-primary" id="start-all"><span>▶</span> Start all</button>
+          <button class="button button-danger" id="stop-all"><span>■</span> Stop all</button>
+          <button class="button button-secondary" id="add-timer"><span>＋</span> Add stopwatch</button>
+          <button class="button button-quiet" id="reset-all"><span>↻</span> Reset all</button>
+          <button class="button button-export" id="export-data"><span>↓</span> Export</button>
+          <label class="toggle-label">
+            <input type="checkbox" id="one-at-a-time" />
+            <span class="fake-checkbox"></span>
+            One at a time
+          </label>
+        </section>
+
+        <section class="board-heading">
+          <div>
+            <h2>Your stopwatches <span id="timer-count">0</span></h2>
+            <p>Each lap can carry a short note for later review.</p>
+          </div>
+          <span class="live-status" id="sync-status" role="status">Connecting to shared session…</span>
+        </section>
+        <section id="timer-grid" class="timer-grid" aria-live="polite"></section>
+      </main>
+      <footer>Built for focused sessions <span>•</span> Your session syncs securely across your devices</footer>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
