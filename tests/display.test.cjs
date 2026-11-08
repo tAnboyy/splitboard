@@ -7,12 +7,13 @@ function display() {
   const callbacks = [];
   const time = { textContent: '' };
   const card = { dataset: { id: 'running' }, querySelector: () => time };
-  const element = { addEventListener() {}, innerHTML: '', textContent: '' };
+  const element = { addEventListener() {}, setAttribute() {}, innerHTML: '', textContent: '' };
   const context = vm.createContext({
     document: { querySelector: () => element, querySelectorAll: selector => selector === '.timer-card' ? [card] : [], getElementById: () => element, addEventListener() {} },
-    window: { addEventListener() {} }, Date: { now: () => now },
+    window: { addEventListener() {} }, Date: class extends Date { static now() { return now; } },
     fetch: () => new Promise(() => {}), setInterval: (callback, delay) => callbacks.push({ callback, delay })
   });
+  vm.runInContext(fs.readFileSync('reporting.js','utf8'), context);
   vm.runInContext(fs.readFileSync('app.js','utf8'), context);
   return { run: code => vm.runInContext(code, context), tick: value => { now = value; callbacks.find(c => c.delay === 50).callback(); return time.textContent; } };
 }

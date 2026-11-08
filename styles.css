@@ -107,3 +107,45 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 /* Keep hour-length stopwatch values and lap times inside their cards. */
 .time { font-size: clamp(24px, 2.8vw, 34px); letter-spacing: -1.5px; }
 .lap-row { grid-template-columns: 35px max-content minmax(0, 1fr) 18px; }
+.dashboard { padding: 34px 0 24px; border-bottom: 1px solid var(--border); }
+.dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.dashboard h1 { font-size: 28px; letter-spacing: -1px; line-height: 1.2; }
+.view-switch { display: flex; padding: 4px; gap: 4px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); }
+.view-switch button { background: transparent; color: var(--muted); border: 0; border-radius: 5px; padding: 8px 22px; font-weight: 700; font-size: 12px; }
+.view-switch button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); }
+.period-navigation { display: flex; align-items: center; gap: 10px; margin-top: 22px; color: var(--muted); font-size: 12px; flex-wrap: wrap; }
+.period-navigation button { border: 1px solid var(--border); background: var(--surface); color: var(--text); min-width: 30px; min-height: 30px; border-radius: 6px; }
+#current-period { padding: 0 10px; font-size: 11px; }
+.dashboard-content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 60px; padding: 30px 0; align-items: center; }
+.dashboard-total { font: 500 clamp(32px, 5vw, 54px)/1.2 "DM Mono", monospace; letter-spacing: -2px; color: var(--text); }
+.dashboard-summary p { font-size: 12px; color: var(--muted); margin: 10px 0 20px; }
+.dashboard-active { color: var(--green); font-size: 12px; }
+.dashboard-breakdown { max-height: 230px; overflow: auto; }
+.breakdown-row { margin-bottom: 15px; }
+.breakdown-row:last-child { margin-bottom: 0; }
+.breakdown-row > div:first-child { display: flex; justify-content: space-between; gap: 18px; font-size: 12px; margin-bottom: 8px; }
+.breakdown-row strong { font: 400 12px "DM Mono", monospace; white-space: nowrap; }
+.breakdown-row > div:first-child > span { overflow-wrap: anywhere; }
+.breakdown-track { height: 3px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+.breakdown-track span { display: block; height: 100%; background: var(--green); }
+.dashboard-footnote { font-size: 11px; color: var(--muted); line-height: 1.6; margin: 8px 0 0; }
+.dashboard-empty { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.week-chart { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 8px; margin-bottom: 24px; }
+.week-chart[hidden] { display: none; }
+.day-column { min-width: 0; text-align: center; font-size: 10px; color: var(--muted); }
+.day-value { display: block; font: 400 9px "DM Mono", monospace; margin-bottom: 6px; }
+.day-track { height: 70px; display: flex; align-items: end; justify-content: center; margin-bottom: 8px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+.day-track span { background: var(--green); width: 100%; min-height: 0; }
+.board-heading { margin-top: 28px; }
+.control-bar { margin-bottom: 18px; padding: 12px; gap: 8px; }
+.control-bar .button { font-size: 10px; min-height: 36px; padding: 0 12px; letter-spacing: .3px; text-transform: none; }
+button:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+@media (max-width: 700px) {
+  .dashboard-content { grid-template-columns: 1fr; gap: 26px; padding: 24px 0; }
+  .dashboard h1 { font-size: 24px; }
+  .dashboard-total { font-size: 44px; }
+  .dashboard-heading { gap: 12px; }
+  .view-switch button { padding: 8px 16px; }
+  .day-value { font-size: 8px; }
+  .week-chart { gap: 5px; }
+}

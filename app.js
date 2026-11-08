@@ -1,5 +1,9 @@
 let timers = [];
 let oneAtATime = false;
+let history = [];
+let undatedElapsed = 0;
+let dashboardView = 'day';
+let dashboardAnchor = null;
 let version = -1;
 let clockOffset = 0;
 let pending = 0;
@@ -12,6 +16,7 @@ function currentElapsed(timer) {
 }
 function connection(ok, message) {
   connected = ok;
+  renderDashboard(true);
   status.textContent = message || (ok ? 'Synced across devices' : 'Reconnecting… Controls unavailable');
   document.querySelectorAll('.control-bar button:not(#export-data), #one-at-a-time, .timer-card button, .timer-card input').forEach(el => {
     el.disabled = !ok || (el.classList.contains('lap') && !timers.find(t => t.id === el.closest('.timer-card').dataset.id)?.running);
@@ -21,6 +26,8 @@ function accept(data, started) {
   clockOffset = data.serverTime - (started + Date.now()) / 2;
   if (data.version > version) {
     timers = data.timers; oneAtATime = data.oneAtATime; version = data.version;
+    history = data.history || [];
+    undatedElapsed = data.undatedElapsed ?? timers.reduce((sum, timer) => sum + timer.elapsed, 0);
     render();
   }
   connection(true);
@@ -48,6 +55,42 @@ function dispatch(command) {
     finally { pending--; }
   });
 }
+function dashboardTime(ms) {
+  const seconds = Math.floor(ms / 1000);
+  return [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60].map(value => String(value).padStart(2, '0')).join(':');
+}
+let dashboardSignature = '';
+let dashboardSecond = -1;
+function renderDashboard(force = false) {
+  const now = Date.now() + clockOffset;
+  const second = Math.floor(now / 1000);
+  if (!force && second === dashboardSecond) return;
+  dashboardSecond = second;
+  const summary = SplitboardReporting.summarize({timers, history, undatedElapsed}, now, dashboardView, dashboardAnchor ?? now);
+  // Update dashboard once per displayed second, without rebuilding its contents every frame.
+  const signature = JSON.stringify([dashboardView, summary.days.map(day => [day.key, Math.floor(day.time / 1000)]), summary.rows.map(row => [row.id,timers.find(timer => timer.id === row.id)?.name || row.name,Math.floor(row.time/1000)]), summary.active, undatedElapsed, connected]);
+  if (signature === dashboardSignature) return;
+  dashboardSignature = signature;
+  document.querySelector('#dashboard-total').textContent = dashboardTime(summary.total);
+  document.querySelector('#dashboard-active').textContent = `${summary.active} stopwatch${summary.active === 1 ? '' : 's'} running`;
+  for (const view of ['day','week']) document.querySelector('#view-' + view).setAttribute('aria-pressed', String(view === dashboardView));
+  const dateLabel = key => new Intl.DateTimeFormat('en-US', { timeZone: SplitboardReporting.zone, month:'short', day:'numeric', year:'numeric' }).format(new Date(SplitboardReporting.midnight(key)));
+  document.querySelector('#period-label').textContent = dashboardView === 'day' ? dateLabel(summary.days[0].key) : `${dateLabel(summary.days[0].key)} – ${dateLabel(summary.days[6].key)}`;
+  document.querySelector('#current-period').textContent = dashboardView === 'day' ? 'Today' : 'This week';
+  const chart = document.querySelector('#week-chart');
+  chart.hidden = dashboardView !== 'week';
+  const max = Math.max(1, ...summary.days.map(day => day.time));
+  chart.innerHTML = dashboardView === 'week' ? summary.days.map(day => {
+    const label = new Intl.DateTimeFormat('en-US',{timeZone: SplitboardReporting.zone,weekday:'short'}).format(new Date(day.start));
+    return `<div class="day-column"><span class="day-value">${dashboardTime(day.time)}</span><div class="day-track"><span style="height:${day.time / max * 100}%"></span></div><span>${label}</span></div>`;
+  }).join('') : '';
+  const maximum = Math.max(1, ...summary.rows.map(row => row.time));
+  document.querySelector('#dashboard-breakdown').innerHTML = summary.rows.length ? summary.rows.map(row => `<div class="breakdown-row"><div><span>${escapeHtml(timers.find(timer => timer.id === row.id)?.name || row.name || 'Untitled stopwatch')}</span><strong>${dashboardTime(row.time)}</strong></div><div class="breakdown-track"><span style="width:${row.time / maximum * 100}%"></span></div></div>`).join('') : '<p class="dashboard-empty">No time logged in this period. Start a stopwatch below to begin.</p>';
+  const undated = document.querySelector('#undated-time');
+  undated.hidden = !summary.undated;
+  undated.textContent = `${dashboardTime(summary.undated)} from earlier stopwatch use has no date history and is excluded from day and week totals.`;
+}
+
 function formatTime(ms) {
   const centiseconds = Math.floor(ms / 10) % 100;
   const seconds = Math.floor(ms / 1000) % 60;
@@ -65,6 +108,7 @@ function render() {
   const fieldClass = focused?.matches?.('.name-input') ? '.name-input' : focused?.matches?.('.note-input') ? '.note-input' : null;
   const selection = fieldClass ? [focused.selectionStart, focused.selectionEnd] : null;
   const draft = fieldClass ? focused.value : null;
+  renderDashboard(true);
   document.querySelector("#timer-count").textContent = timers.length;
   grid.innerHTML = "";
   if (!timers.length) {
@@ -138,6 +182,7 @@ document.querySelector("#export-data").addEventListener("click", () => {
 document.querySelector("#theme-toggle").addEventListener("click", () => document.body.classList.toggle("light-mode"));
 
 setInterval(() => {
+  renderDashboard();
   document.querySelectorAll(".timer-card").forEach((card) => {
     const timer = timers.find(timer => timer.id === card.dataset.id);
     const time = card.querySelector(".time");
@@ -145,6 +190,15 @@ setInterval(() => {
   });
 }, 50);
 
+for (const view of ['day', 'week']) document.querySelector('#view-' + view).addEventListener('click', () => {
+  dashboardView = view; renderDashboard(true);
+});
+for (const [id, direction] of [['previous-period', -1], ['next-period', 1]]) document.querySelector('#' + id).addEventListener('click', () => {
+  const key = SplitboardReporting.dateKey(dashboardAnchor ?? Date.now() + clockOffset);
+  dashboardAnchor = SplitboardReporting.midnight(SplitboardReporting.shift(key, direction * (dashboardView === 'week' ? 7 : 1))) + 12 * 3600000;
+  renderDashboard(true);
+});
+document.querySelector('#current-period').addEventListener('click', () => { dashboardAnchor = null; renderDashboard(true); });
 render();
 connection(false, "Connecting to shared session…");
 refresh();

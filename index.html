@@ -24,12 +24,42 @@
       </header>
 
       <main>
-        <section class="hero">
-          <div class="eyebrow">TEAM TIMEKEEPING</div>
-          <h1>Multi stopwatch</h1>
-          <p>Track every participant independently. Add a lap note the moment it happens.</p>
+        <section class="dashboard" aria-labelledby="dashboard-title">
+          <div class="dashboard-heading">
+            <h1 id="dashboard-title">Time logged</h1>
+            <div class="view-switch" role="group" aria-label="Dashboard period">
+              <button id="view-day" aria-pressed="true">Day</button>
+              <button id="view-week" aria-pressed="false">Week</button>
+            </div>
+          </div>
+          <div class="period-navigation">
+            <button id="previous-period" aria-label="Previous period">‹</button>
+            <span id="period-label"></span>
+            <button id="next-period" aria-label="Next period">›</button>
+            <button id="current-period">Today</button>
+          </div>
+          <div class="dashboard-content">
+            <div class="dashboard-summary">
+              <div id="dashboard-total" class="dashboard-total">00:00:00</div>
+              <p>Total across all stopwatches</p>
+              <span id="dashboard-active" class="dashboard-active">Connecting…</span>
+            </div>
+            <div class="dashboard-detail">
+              <div id="week-chart" class="week-chart" aria-label="Daily time totals" hidden></div>
+              <div id="dashboard-breakdown" class="dashboard-breakdown"></div>
+            </div>
+          </div>
+          <p class="dashboard-footnote">Dates use Eastern time. Weeks start Monday. Overlapping stopwatches each contribute to the total.</p>
+          <p id="undated-time" class="dashboard-footnote" hidden></p>
         </section>
 
+        <section class="board-heading">
+          <div>
+            <h2>Your stopwatches <span id="timer-count">0</span></h2>
+            <p>Each lap can carry a short note for later review.</p>
+          </div>
+          <span class="live-status" id="sync-status" role="status">Connecting to shared session…</span>
+        </section>
         <section class="control-bar" aria-label="Global stopwatch controls">
           <button class="button button-primary" id="start-all"><span>▶</span> Start all</button>
           <button class="button button-danger" id="stop-all"><span>■</span> Stop all</button>
@@ -43,17 +73,11 @@
           </label>
         </section>
 
-        <section class="board-heading">
-          <div>
-            <h2>Your stopwatches <span id="timer-count">0</span></h2>
-            <p>Each lap can carry a short note for later review.</p>
-          </div>
-          <span class="live-status" id="sync-status" role="status">Connecting to shared session…</span>
-        </section>
         <section id="timer-grid" class="timer-grid" aria-live="polite"></section>
       </main>
       <footer>Built for focused sessions <span>•</span> Your session syncs securely across your devices</footer>
     </div>
+    <script src="reporting.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
