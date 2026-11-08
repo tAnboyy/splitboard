@@ -104,3 +104,6 @@ body.light-mode {
 .live-status { max-width: 320px; text-align: right; }
 button:disabled { cursor: not-allowed; opacity: .45; }
 @media (max-width: 560px) { .live-status { display: block; text-align: left; } }
+/* Keep hour-length stopwatch values and lap times inside their cards. */
+.time { font-size: clamp(24px, 2.8vw, 34px); letter-spacing: -1.5px; }
+.lap-row { grid-template-columns: 35px max-content minmax(0, 1fr) 18px; }

@@ -51,8 +51,11 @@ function dispatch(command) {
 function formatTime(ms) {
   const centiseconds = Math.floor(ms / 10) % 100;
   const seconds = Math.floor(ms / 1000) % 60;
-  const minutes = Math.floor(ms / 60000);
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(centiseconds).padStart(2, "0")}`;
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const time = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(centiseconds).padStart(2, "0")}`;
+  return hours ? `${String(hours).padStart(2, "0")}:${time}` : time;
 }
 
 function render() {
@@ -136,7 +139,7 @@ document.querySelector("#theme-toggle").addEventListener("click", () => document
 
 setInterval(() => {
   document.querySelectorAll(".timer-card").forEach((card) => {
-    const timer = findTimer(card.dataset.id);
+    const timer = timers.find(timer => timer.id === card.dataset.id);
     const time = card.querySelector(".time");
     if (timer && time) time.textContent = formatTime(currentElapsed(timer));
   });
