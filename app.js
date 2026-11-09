@@ -1,6 +1,9 @@
 let timers = [];
 let oneAtATime = false;
 let history = [];
+let activeDay = null;
+let dailyArchives = [];
+let selectedArchiveDay = null;
 let undatedElapsed = 0;
 let dashboardView = 'day';
 let dashboardAnchor = null;
@@ -26,6 +29,9 @@ function accept(data, started) {
   clockOffset = data.serverTime - (started + Date.now()) / 2;
   if (data.version > version) {
     timers = data.timers; oneAtATime = data.oneAtATime; version = data.version;
+    if (activeDay && data.day !== activeDay) document.activeElement?.blur?.();
+    activeDay = data.day;
+    dailyArchives = data.dailyArchives || [];
     history = data.history || [];
     undatedElapsed = data.undatedElapsed ?? timers.reduce((sum, timer) => sum + timer.elapsed, 0);
     render();
@@ -44,6 +50,7 @@ async function refresh() {
 }
 function dispatch(command) {
   if (!connected) return;
+  command = { ...command, day: activeDay };
   pending++;
   queue = queue.then(async () => {
     const started = Date.now();
@@ -109,6 +116,7 @@ function render() {
   const selection = fieldClass ? [focused.selectionStart, focused.selectionEnd] : null;
   const draft = fieldClass ? focused.value : null;
   renderDashboard(true);
+  renderArchives();
   document.querySelector("#timer-count").textContent = timers.length;
   grid.innerHTML = "";
   if (!timers.length) {
@@ -148,6 +156,22 @@ function render() {
   }
 }
 
+function renderArchives() {
+  const select = document.querySelector('#archive-day');
+  const content = document.querySelector('#archive-content');
+  const days = [...dailyArchives].reverse();
+  if (!days.some(item => item.day === selectedArchiveDay)) selectedArchiveDay = days[0]?.day || null;
+  select.innerHTML = days.length ? days.map(item => `<option value="${escapeHtml(item.day)}">${escapeHtml(item.day)}</option>`).join('') : '<option>No archived days yet</option>';
+  select.disabled = !days.length;
+  if (selectedArchiveDay) select.value = selectedArchiveDay;
+  const archive = days.find(item => item.day === selectedArchiveDay);
+  content.innerHTML = archive ? archive.timers.map(timer => `<article class="archive-card">
+    <div class="archive-heading"><h3>${escapeHtml(timer.name || 'Untitled stopwatch')}</h3><strong>${formatTime(timer.elapsed)}</strong></div>
+    <p class="archive-state">${timer.running ? 'Running at midnight; stopped automatically' : 'Stopped at midnight'}</p>
+    ${timer.laps.length ? `<ol class="archive-laps">${timer.laps.map(lap => `<li><span>${formatTime(lap.time)}</span><p>${escapeHtml(lap.note || 'No note')}</p></li>`).join('')}</ol>` : '<p class="archive-state">No laps recorded.</p>'}
+    </article>`).join('') || '<p class="dashboard-empty">No stopwatches in this archived day.</p>' : '<p class="dashboard-empty">Your first archive will appear after midnight. Previous times, laps, and notes will be saved here.</p>';
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 }
@@ -176,7 +200,7 @@ document.querySelector('#add-timer').addEventListener('click', () => dispatch({ 
 document.querySelector('#one-at-a-time').addEventListener('change', event => dispatch({ type: 'exclusive', value: event.target.checked }));
 document.querySelector("#export-data").addEventListener("click", () => {
   const data = timers.map((timer) => ({ name: timer.name, time: formatTime(currentElapsed(timer)), laps: timer.laps.map((lap, i) => ({ lap: i + 1, time: formatTime(lap.time), note: lap.note })) }));
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ day: activeDay, timezone: SplitboardReporting.zone, timers: data, history, dailyArchives, undatedElapsed }, null, 2)], { type: "application/json" });
   const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "splitboard-session.json"; link.click(); URL.revokeObjectURL(link.href);
 });
 document.querySelector("#theme-toggle").addEventListener("click", () => document.body.classList.toggle("light-mode"));
@@ -190,6 +214,7 @@ setInterval(() => {
   });
 }, 50);
 
+document.querySelector('#archive-day').addEventListener('change', event => { selectedArchiveDay = event.target.value; renderArchives(); });
 for (const view of ['day', 'week']) document.querySelector('#view-' + view).addEventListener('click', () => {
   dashboardView = view; renderDashboard(true);
 });

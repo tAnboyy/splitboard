@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { webcrypto } = require('node:crypto');
 globalThis.crypto ||= webcrypto;
+require('../reporting.js');
 require('../state.js');
 const { initialState, applyCommand, elapsed } = Splitboard;
 const apply = (s, type, now, args = {}) => applyCommand(s, { type, ...args }, now);

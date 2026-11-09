@@ -56,7 +56,7 @@
         <section class="board-heading">
           <div>
             <h2>Your stopwatches <span id="timer-count">0</span></h2>
-            <p>Each lap can carry a short note for later review.</p>
+            <p>Stopwatches reset and stop at midnight Eastern time. Previous days are saved below.</p>
           </div>
           <span class="live-status" id="sync-status" role="status">Connecting to shared session…</span>
         </section>
@@ -74,6 +74,12 @@
         </section>
 
         <section id="timer-grid" class="timer-grid" aria-live="polite"></section>
+        <details class="daily-archive">
+          <summary>Previous days · stopwatch states &amp; lap notes</summary>
+          <label for="archive-day">Archived day (Eastern time)</label>
+          <select id="archive-day" aria-label="Archived day"></select>
+          <div id="archive-content" class="archive-content"></div>
+        </details>
       </main>
       <footer>Built for focused sessions <span>•</span> Your session syncs securely across your devices</footer>
     </div>
