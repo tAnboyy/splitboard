@@ -1,6 +1,6 @@
 (function (root) {
   function initialState() {
-    return { timers: Array.from({ length: 3 }, (_, i) => ({ id: crypto.randomUUID(), name: `Participant ${i + 1}`, elapsed: 0, running: false, startedAt: null, laps: [] })), oneAtATime: false, history: [], undatedElapsed: 0 };
+    return { timers: Array.from({ length: 3 }, (_, i) => ({ id: crypto.randomUUID(), name: `Participant ${i + 1}`, elapsed: 0, running: false, startedAt: null, laps: [] })), oneAtATime: false, history: [], undatedElapsed: 0, savedSessions: [] };
   }
   function elapsed(timer, now) { return timer.elapsed + (timer.running ? Math.max(0, now - timer.startedAt) : 0); }
   function applyCommand(state, command, now) {
@@ -30,7 +30,20 @@
       case 'note': { const lap = timer?.laps.find(l => l.id === command.lapId); if (lap) lap.note = String(command.value).slice(0, 2000); break; }
       case 'start-all': if (state.oneAtATime) { const t = state.timers.find(t => t.running) || state.timers[0]; if (t) start(t); } else state.timers.forEach(start); break;
       case 'stop-all': state.timers.forEach(stop); break;
-      case 'reset-all': state.timers.forEach(reset); break;
+      case 'reset-all': {
+        state.savedSessions ??= [];
+        // Retried reset requests must not archive or clear a later session.
+        if (command.snapshotId && state.savedSessions.some(session => session.id === command.snapshotId)) break;
+        if (state.timers.some(t => elapsed(t, now) > 0 || t.laps.length)) {
+          state.savedSessions.push({
+            id: command.snapshotId || crypto.randomUUID(), savedAt: now,
+            timers: state.timers.map(t => ({ ...structuredClone(t), elapsed: elapsed(t, now) })),
+            oneAtATime: state.oneAtATime
+          });
+        }
+        state.timers.forEach(t => { stop(t); reset(t); });
+        break;
+      }
       case 'add': if (state.timers.length < 100) state.timers.push({ id: command.timerId, name: `Participant ${state.timers.length + 1}`, elapsed: 0, running: false, startedAt: null, laps: [] }); break;
       case 'exclusive': state.oneAtATime = command.value === true; if (state.oneAtATime) { const active = state.timers.find(t => t.running); state.timers.forEach(t => { if (t !== active) stop(t); }); } break;
       default: throw Error('Unknown command');

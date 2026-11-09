@@ -47,3 +47,30 @@ test('deleted timer commands cannot resurrect it', () => {
   apply(s, 'remove', 1, { id }); apply(s, 'start', 2, { id });
   assert.equal(s.timers.length, 2);
 });
+test('Reset all archives frozen times, running state, laps and notes before stopping and clearing', () => {
+  const s=initialState(),id=s.timers[0].id;
+  apply(s,'start',1000,{id}); apply(s,'lap',2000,{id,lapId:'lap-a'});
+  apply(s,'note',2100,{id,lapId:'lap-a',value:'First interval\nKeep this note'});
+  s.timers[1].elapsed=3000;
+  apply(s,'reset-all',5000,{snapshotId:'saved-a'});
+  const saved=s.savedSessions[0];
+  assert.equal(saved.savedAt,5000); assert.equal(saved.timers.length,3);
+  assert.equal(saved.timers[0].elapsed,4000); assert.equal(saved.timers[0].running,true);
+  assert.equal(saved.timers[1].elapsed,3000); assert.equal(saved.timers[1].running,false);
+  assert.equal(saved.timers[0].laps[0].note,'First interval\nKeep this note');
+  assert.ok(s.timers.every(t=>t.elapsed===0 && !t.running && t.startedAt===null && !t.laps.length));
+  assert.equal(s.history.filter(e=>e.timerId===id).reduce((sum,e)=>sum+e.end-e.start,0),4000);
+  apply(s,'name',6000,{id,value:'New name'}); apply(s,'start',6000,{id});
+  assert.notEqual(saved.timers[0].name,'New name'); assert.equal(saved.timers[0].elapsed,4000);
+  apply(s,'reset-all',7000,{snapshotId:'saved-a'});
+  assert.equal(s.savedSessions.length,1); assert.equal(s.timers[0].running,true);
+});
+test('Reset all migrates existing data and does not create empty duplicate sessions', () => {
+  const s=initialState(); delete s.savedSessions;
+  s.timers[0].elapsed=1000;
+  apply(s,'reset-all',2000,{snapshotId:'saved-b'});
+  const reloaded=JSON.parse(JSON.stringify(s));
+  assert.equal(reloaded.savedSessions[0].timers[0].elapsed,1000);
+  apply(reloaded,'reset-all',3000,{snapshotId:'saved-c'});
+  assert.equal(reloaded.savedSessions.length,1);
+});

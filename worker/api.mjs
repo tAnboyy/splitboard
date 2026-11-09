@@ -19,7 +19,7 @@ export async function api(request, env) {
     if (text.length > 10000) return json({ error: 'Command too large' }, 413);
     command = JSON.parse(text);
     if (!command || typeof command !== 'object') throw Error();
-    for (const key of ['id', 'timerId', 'lapId']) if (command[key] !== undefined && (typeof command[key] !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(command[key]))) throw Error();
+    for (const key of ['id', 'timerId', 'lapId', 'snapshotId']) if (command[key] !== undefined && (typeof command[key] !== 'string' || !/^[a-zA-Z0-9-]{1,80}$/.test(command[key]))) throw Error();
     if ((command.type === 'add' && !command.timerId) || (command.type === 'lap' && !command.lapId)) throw Error();
   } catch { return json({ error: 'Invalid command' }, 400); }
   for (let attempt = 0; attempt < 10; attempt++) {

@@ -1,6 +1,8 @@
 let timers = [];
 let oneAtATime = false;
 let history = [];
+let savedSessions = [];
+let selectedSessionId = null;
 let undatedElapsed = 0;
 let dashboardView = 'day';
 let dashboardAnchor = null;
@@ -27,6 +29,8 @@ function accept(data, started) {
   if (data.version > version) {
     timers = data.timers; oneAtATime = data.oneAtATime; version = data.version;
     history = data.history || [];
+    if ((data.savedSessions || []).length > savedSessions.length) selectedSessionId = data.savedSessions[data.savedSessions.length - 1].id;
+    savedSessions = data.savedSessions || [];
     undatedElapsed = data.undatedElapsed ?? timers.reduce((sum, timer) => sum + timer.elapsed, 0);
     render();
   }
@@ -109,6 +113,7 @@ function render() {
   const selection = fieldClass ? [focused.selectionStart, focused.selectionEnd] : null;
   const draft = fieldClass ? focused.value : null;
   renderDashboard(true);
+  renderSavedSessions();
   document.querySelector("#timer-count").textContent = timers.length;
   grid.innerHTML = "";
   if (!timers.length) {
@@ -148,6 +153,26 @@ function render() {
   }
 }
 
+function renderSavedSessions() {
+  const select = document.querySelector('#saved-session');
+  const list = document.querySelector('#saved-session-list');
+  const sessions = [...savedSessions].reverse();
+  if (!sessions.some(session => session.id === selectedSessionId)) selectedSessionId = sessions[0]?.id || null;
+  const dateLabel = timestamp => new Intl.DateTimeFormat('en-US', { timeZone: SplitboardReporting.zone, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' }).format(new Date(timestamp));
+  select.innerHTML = sessions.length ? sessions.map(session => `<option value="${escapeHtml(session.id)}">${dateLabel(session.savedAt)} ET</option>`).join('') : '<option>No saved sessions yet</option>';
+  select.disabled = !sessions.length;
+  if (selectedSessionId) select.value = selectedSessionId;
+  const session = sessions.find(item => item.id === selectedSessionId);
+  if (!session) { list.innerHTML = '<p class="dashboard-empty">Click Reset all to save your stopwatch times, laps, and notes here before starting fresh.</p>'; return; }
+  const maximum = Math.max(1, ...session.timers.map(timer => timer.elapsed));
+  const open = new Set(Array.from(list.querySelectorAll?.('details[open]') || []).map(el => el.dataset.id));
+  list.innerHTML = session.timers.map(timer => `<details class="saved-timer" data-id="${escapeHtml(timer.id)}" ${open.has(timer.id) ? 'open' : ''}>
+    <summary><div class="breakdown-row"><div><span>${escapeHtml(timer.name || 'Untitled stopwatch')}</span><strong>${dashboardTime(timer.elapsed)}</strong></div><div class="breakdown-track"><span style="width:${timer.elapsed / maximum * 100}%"></span></div></div><span class="saved-lap-hint">${timer.laps.length} lap${timer.laps.length === 1 ? '' : 's'} · View notes</span></summary>
+    <p class="saved-state">${timer.running ? 'Was running when saved' : 'Was stopped when saved'}</p>
+    ${timer.laps.length ? `<ol class="saved-laps">${timer.laps.map(lap => `<li><span>${formatTime(lap.time)}</span><p>${escapeHtml(lap.note || 'No note')}</p></li>`).join('')}</ol>` : '<p class="saved-state">No laps recorded.</p>'}
+    </details>`).join('');
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 }
@@ -171,12 +196,14 @@ grid.addEventListener('input', event => {
   if (event.target.matches('.name-input')) dispatch({ type: 'name', id: card.dataset.id, value: event.target.value });
   if (event.target.matches('.note-input')) dispatch({ type: 'note', id: card.dataset.id, lapId: event.target.closest('.lap-row').dataset.lap, value: event.target.value });
 });
-for (const type of ['start-all', 'stop-all', 'reset-all']) document.getElementById(type).addEventListener('click', () => dispatch({ type }));
+for (const type of ['start-all', 'stop-all']) document.getElementById(type).addEventListener('click', () => dispatch({ type }));
+document.querySelector('#reset-all').addEventListener('click', () => dispatch({ type: 'reset-all', snapshotId: crypto.randomUUID() }));
+document.querySelector('#saved-session').addEventListener('change', event => { selectedSessionId = event.target.value; renderSavedSessions(); });
 document.querySelector('#add-timer').addEventListener('click', () => dispatch({ type: 'add', timerId: crypto.randomUUID() }));
 document.querySelector('#one-at-a-time').addEventListener('change', event => dispatch({ type: 'exclusive', value: event.target.checked }));
 document.querySelector("#export-data").addEventListener("click", () => {
   const data = timers.map((timer) => ({ name: timer.name, time: formatTime(currentElapsed(timer)), laps: timer.laps.map((lap, i) => ({ lap: i + 1, time: formatTime(lap.time), note: lap.note })) }));
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ timers: data, history, savedSessions, timezone: SplitboardReporting.zone }, null, 2)], { type: "application/json" });
   const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "splitboard-session.json"; link.click(); URL.revokeObjectURL(link.href);
 });
 document.querySelector("#theme-toggle").addEventListener("click", () => document.body.classList.toggle("light-mode"));

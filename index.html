@@ -64,7 +64,7 @@
           <button class="button button-primary" id="start-all"><span>▶</span> Start all</button>
           <button class="button button-danger" id="stop-all"><span>■</span> Stop all</button>
           <button class="button button-secondary" id="add-timer"><span>＋</span> Add stopwatch</button>
-          <button class="button button-quiet" id="reset-all"><span>↻</span> Reset all</button>
+          <button class="button button-quiet" id="reset-all" title="Save all stopwatch times, laps and notes, then reset and stop them"><span>↻</span> Reset all</button>
           <button class="button button-export" id="export-data"><span>↓</span> Export</button>
           <label class="toggle-label">
             <input type="checkbox" id="one-at-a-time" />
@@ -74,6 +74,13 @@
         </section>
 
         <section id="timer-grid" class="timer-grid" aria-live="polite"></section>
+        <section class="saved-sessions" aria-labelledby="saved-sessions-title">
+          <div class="saved-sessions-heading">
+            <div><h2 id="saved-sessions-title">Saved sessions</h2><p>Reset all saves every stopwatch, including laps and notes, then resets and stops them.</p></div>
+            <label>Saved at <select id="saved-session" aria-label="Select a saved session"></select></label>
+          </div>
+          <div id="saved-session-list"></div>
+        </section>
       </main>
       <footer>Built for focused sessions <span>•</span> Your session syncs securely across your devices</footer>
     </div>

@@ -149,3 +149,24 @@ button:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
   .day-value { font-size: 8px; }
   .week-chart { gap: 5px; }
 }
+.saved-sessions { margin-top: 36px; padding: 26px 0; border-top: 1px solid var(--border); }
+.saved-sessions-heading { display: flex; justify-content: space-between; gap: 24px; align-items: start; margin-bottom: 32px; }
+.saved-sessions-heading h2 { margin: 0; font-size: 18px; letter-spacing: -.4px; }
+.saved-sessions-heading p, .saved-sessions-heading label { color: var(--muted); font-size: 12px; line-height: 1.6; }
+.saved-sessions-heading p { margin: 8px 0 0; max-width: 440px; }
+.saved-sessions-heading select { display: block; max-width: 100%; margin-top: 6px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+.saved-timer { margin-bottom: 26px; }
+.saved-timer summary { cursor: pointer; list-style: none; }
+.saved-timer summary::-webkit-details-marker { display: none; }
+.saved-timer summary:focus-visible { outline: 2px solid var(--green); outline-offset: 5px; }
+.saved-timer .breakdown-row { margin-bottom: 8px; }
+.saved-timer .breakdown-row > div:first-child { font-size: 16px; margin-bottom: 14px; }
+.saved-timer .breakdown-row strong { font-size: 17px; }
+.saved-timer .breakdown-track { height: 4px; }
+.saved-lap-hint, .saved-state { color: var(--muted); font-size: 11px; }
+.saved-timer[open] .saved-lap-hint { color: var(--green); }
+.saved-laps { font-size: 12px; padding-left: 24px; }
+.saved-laps li { padding: 10px 0; border-top: 1px solid var(--border); }
+.saved-laps span { font-family: "DM Mono", monospace; }
+.saved-laps p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0 0; color: var(--muted); }
+@media (max-width: 700px) { .saved-sessions-heading { flex-direction: column; gap: 14px; } .saved-sessions-heading label { width: 100%; } }

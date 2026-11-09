@@ -41,3 +41,17 @@ test('rejects cross-origin writes, unknown commands and missing database', async
   assert.equal((await api(post({ type: 'bad' }), env)).status, 400);
   assert.equal((await api(get(), {})).status, 503);
 });
+test('Reset all persists lap notes and frozen times for other devices after reload', async () => {
+  const env={DB:new Database()};
+  const initial=await (await api(get(),env)).json(); const id=initial.timers[0].id;
+  await api(post({type:'start',id}),env);
+  await api(post({type:'lap',id,lapId:'shared-lap'}),env);
+  await api(post({type:'note',id,lapId:'shared-lap',value:'Saved across devices'}),env);
+  await api(post({type:'reset-all',snapshotId:'shared-snapshot'}),env);
+  const phone=await (await api(get(),env)).json();
+  assert.equal(phone.savedSessions.length,1);
+  assert.equal(phone.savedSessions[0].timers[0].laps[0].note,'Saved across devices');
+  assert.ok(phone.timers.every(t=>!t.running && t.elapsed===0 && !t.laps.length));
+  await api(post({type:'reset-all',snapshotId:'shared-snapshot'}),env);
+  assert.equal((await (await api(get(),env)).json()).savedSessions.length,1);
+});
