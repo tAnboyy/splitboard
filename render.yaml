@@ -15,13 +15,4 @@ services:
       - key: APP_ACCESS_CODE
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: splitboard-db
-          property: connectionString
-
-databases:
-  - name: splitboard-db
-    region: virginia
-    plan: free
-    databaseName: splitboard
-    ipAllowList: []
+        sync: false

@@ -23,3 +23,5 @@ Deploy the Node server with `npm ci` as the build command and `npm start` as the
 Free Render Postgres expires after 30 days. Use a paid database for ongoing storage. A free web service can spin down on idle; stopwatch elapsed time still derives from persisted timestamps when it wakes.
 
 The original Cloudflare Sites build remains available through `npm run build:sites`; the Node/Render deployment does not depend on it.
+
+The default Render Blueprint uses an external PostgreSQL database (for example, Railway). Set `DATABASE_URL` to its **public/TCP-proxy** URL because Render cannot access Railway's private hostname. Keep the connection URL in Render environment variables, never in GitHub. `deploy/render-persistent.yaml` is an optional alternative that provisions paid Render Postgres.
