@@ -41,29 +41,3 @@ test('rejects cross-origin writes, unknown commands and missing database', async
   assert.equal((await api(post({ type: 'bad' }), env)).status, 400);
   assert.equal((await api(get(), {})).status, 503);
 });
-test('concurrent device reads persist rollover only once', async () => {
-  const now = Date.now(), today = SplitboardReporting.dateKey(now);
-  const yesterday = SplitboardReporting.shift(today,-1);
-  const state = Splitboard.initialState(SplitboardReporting.midnight(yesterday));
-  state.timers[0].running = true; state.timers[0].startedAt = SplitboardReporting.midnight(today)-1000;
-  state.timers[0].laps=[{id:'old-lap',time:500,note:'Saved from yesterday'}];
-  const DB = new Database(); DB.row={state:JSON.stringify(state),version:10};
-  const results=await Promise.all([api(get(),{DB}),api(get(),{DB})]);
-  for (const r of results) {
-    const data=await r.json(); assert.equal(data.day,today); assert.equal(data.dailyArchives.length,1);
-    assert.equal(data.dailyArchives[0].timers[0].elapsed,1000);
-    assert.equal(data.dailyArchives[0].timers[0].laps[0].note,'Saved from yesterday');
-    assert.equal(data.timers[0].running,false); assert.equal(data.timers[0].elapsed,0);
-  }
-  assert.equal(JSON.parse(DB.row.state).dailyArchives.length,1); assert.equal(DB.row.version,11);
-});
-test('a stale previous-day command is rejected after archiving, without editing new day', async () => {
-  const today=SplitboardReporting.dateKey(Date.now()),yesterday=SplitboardReporting.shift(today,-1);
-  const state=Splitboard.initialState(SplitboardReporting.midnight(yesterday));
-  const DB=new Database(); DB.row={state:JSON.stringify(state),version:5};
-  const response=await api(post({type:'start',id:state.timers[0].id,day:yesterday}),{DB});
-  assert.equal(response.status,409);
-  const saved=JSON.parse(DB.row.state);
-  assert.equal(saved.day,today); assert.equal(saved.dailyArchives.length,1);
-  assert.ok(saved.timers.every(t=>!t.running));
-});

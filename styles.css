@@ -149,17 +149,3 @@ button:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
   .day-value { font-size: 8px; }
   .week-chart { gap: 5px; }
 }
-.daily-archive { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border); }
-.daily-archive summary { cursor: pointer; font-size: 14px; font-weight: 700; margin-bottom: 18px; }
-.daily-archive label { color: var(--muted); font-size: 12px; margin-right: 10px; }
-.daily-archive select { max-width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; }
-.archive-content { margin-top: 18px; display: grid; gap: 12px; }
-.archive-card { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 16px; }
-.archive-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-.archive-heading h3 { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
-.archive-heading strong { white-space: nowrap; font: 400 16px "DM Mono", monospace; }
-.archive-state { color: var(--muted); font-size: 12px; line-height: 1.6; }
-.archive-laps { padding-left: 24px; font-size: 12px; }
-.archive-laps li { padding: 8px 0; border-top: 1px solid var(--border); }
-.archive-laps span { font-family: "DM Mono", monospace; }
-.archive-laps p { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted); }

@@ -1,30 +1,8 @@
 (function (root) {
-  function initialState(now = Date.now()) {
-    return { timers: Array.from({ length: 3 }, (_, i) => ({ id: crypto.randomUUID(), name: `Participant ${i + 1}`, elapsed: 0, running: false, startedAt: null, laps: [] })), oneAtATime: false, history: [], undatedElapsed: 0, day: root.SplitboardReporting.dateKey(now), dailyArchives: [] };
+  function initialState() {
+    return { timers: Array.from({ length: 3 }, (_, i) => ({ id: crypto.randomUUID(), name: `Participant ${i + 1}`, elapsed: 0, running: false, startedAt: null, laps: [] })), oneAtATime: false, history: [], undatedElapsed: 0 };
   }
   function elapsed(timer, now) { return timer.elapsed + (timer.running ? Math.max(0, now - timer.startedAt) : 0); }
-  function rollover(state, now) {
-    const { dateKey, midnight, shift } = root.SplitboardReporting;
-    const today = dateKey(now);
-    // Existing sessions start daily resets on installation, without guessing dates.
-    state.day ??= today;
-    state.dailyArchives ??= [];
-    if (state.day >= today) return state;
-    const cutoff = midnight(shift(state.day, 1));
-    state.history ??= [];
-    state.undatedElapsed ??= state.timers.reduce((sum, timer) => sum + timer.elapsed, 0);
-    const snapshot = structuredClone(state.timers);
-    for (const timer of snapshot) {
-      timer.elapsed = elapsed(timer, cutoff);
-      if (timer.running && cutoff > timer.startedAt) {
-        state.history.push({ timerId: timer.id, name: timer.name, start: timer.startedAt, end: cutoff });
-      }
-    }
-    state.dailyArchives.push({ day: state.day, closedAt: cutoff, timers: snapshot, oneAtATime: state.oneAtATime });
-    state.timers = state.timers.map(timer => ({ ...timer, elapsed: 0, running: false, startedAt: null, laps: [] }));
-    state.day = today;
-    return state;
-  }
   function applyCommand(state, command, now) {
     // Legacy stopwatch totals cannot be assigned to a calendar date.
     state.history ??= [];
@@ -59,5 +37,5 @@
     }
     return state;
   }
-  root.Splitboard = { initialState, elapsed, applyCommand, rollover };
+  root.Splitboard = { initialState, elapsed, applyCommand };
 })(globalThis);
