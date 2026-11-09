@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: splitboard
+    runtime: node
+    plan: free
+    region: virginia
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.13.1
+      - key: APP_ACCESS_CODE
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: splitboard-db
+          property: connectionString
+
+databases:
+  - name: splitboard-db
+    region: virginia
+    plan: free
+    databaseName: splitboard
+    ipAllowList: []
