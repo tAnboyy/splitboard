@@ -2,8 +2,9 @@ import http from 'node:http';
 import pg from 'pg';
 import { createApp } from './app.mjs';
 import { PostgresStorage } from './storage.mjs';
+import { databaseOptions } from './database.mjs';
 if(!process.env.DATABASE_URL) throw Error('DATABASE_URL is required');
-const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:5});
+const pool=new pg.Pool(databaseOptions(process.env));
 await pool.query('CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, version INTEGER NOT NULL, state TEXT NOT NULL)');
 if(process.env.INITIAL_SESSION_STATE) {
   const seed=JSON.parse(process.env.INITIAL_SESSION_STATE);

@@ -33,3 +33,11 @@ test('Postgres adapter uses bound positional values, conflict handling and updat
  const result=await storage.prepare('UPDATE sessions SET state = ?, version = version + 1 WHERE id = ? AND version = ?').bind('{}','personal',2).run();
  assert.equal(result.meta.changes,1);assert.deepEqual(calls[1].values,['{}','personal',2]);
 });
+test('external database TLS verifies the supplied CA and database identity',async()=>{
+ const {databaseOptions}=await import('../server/database.mjs');
+ const opts=databaseOptions({DATABASE_URL:'postgresql://user:pass@proxy.example:1234/db?sslmode=require',DATABASE_SSL_CA:'trusted-ca',DATABASE_TLS_SERVERNAME:'postgres.railway.internal'});
+ assert.equal(opts.ssl.rejectUnauthorized,true);assert.equal(opts.ssl.ca,'trusted-ca');
+ assert.ok(!opts.connectionString.includes('sslmode='));
+ assert.equal(opts.ssl.checkServerIdentity('proxy.example',{subjectaltname:'DNS:postgres.railway.internal'}),undefined);
+ assert.ok(opts.ssl.checkServerIdentity('proxy.example',{subjectaltname:'DNS:wrong.example'}) instanceof Error);
+});
