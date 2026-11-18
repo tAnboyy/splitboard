@@ -252,6 +252,7 @@ for (let hour = 6; hour < 24; hour++) {
   input.dataset.hour = hour; input.maxLength = 200; input.setAttribute('list', 'task-categories');
   input.setAttribute('aria-label', `Task from ${hourLabel(hour)} to ${hour === 23 ? '12am' : hourLabel(hour + 1)}`);
   input.placeholder = 'Add task'; input.disabled = true;
+  input.addEventListener('input', () => { input.title = input.value; });
   input.addEventListener('change', () => {
     document.querySelector('#plan-status').textContent = 'Saving…';
     dispatch({type: 'plan-task', date: planDate.value, hour, value: input.value});
@@ -261,6 +262,7 @@ for (let hour = 6; hour < 24; hour++) {
 function renderPlanner() {
   document.querySelectorAll('#plan-tasks input').forEach(input => {
     if (document.activeElement !== input) input.value = plans[planDate.value]?.[input.dataset.hour] || '';
+    input.title = input.value;
   });
   document.querySelector('#task-categories').replaceChildren(...taskCategories.map(value => {
     const option = document.createElement('option'); option.value = value; return option;
