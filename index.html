@@ -24,6 +24,25 @@
       </header>
 
       <main>
+        <section class="planner" aria-labelledby="planner-title">
+          <div class="planner-heading">
+            <h2 id="planner-title">Daily plan</h2>
+            <label class="planner-date">Date <input type="date" id="plan-date" aria-label="Plan date" /></label>
+            <span id="plan-status" role="status"></span>
+          </div>
+          <div class="planner-scroll" tabindex="0" aria-label="Hourly plan, scroll horizontally for later hours">
+            <table class="planner-table" aria-label="Daily plan from 6am to midnight"><tbody>
+              <tr id="plan-times"><th scope="row">Time</th></tr>
+              <tr id="plan-tasks"><th scope="row">Task</th></tr>
+            </tbody></table>
+          </div>
+          <datalist id="task-categories"></datalist>
+          <details class="planner-categories"><summary>Configure task categories</summary>
+            <form id="category-form"><label for="category-name">New category</label><input id="category-name" maxlength="80" placeholder="e.g. Study" required /><button type="submit">Add</button></form>
+            <div id="category-list"></div>
+            <p>Suggestions are shared across days. Removing a category keeps existing tasks.</p>
+          </details>
+        </section>
         <section class="dashboard" aria-labelledby="dashboard-title">
           <div class="dashboard-heading">
             <h1 id="dashboard-title">Time logged</h1>

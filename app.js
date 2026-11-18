@@ -1,3 +1,5 @@
+let plans = {};
+let taskCategories = [];
 let timers = [];
 let oneAtATime = false;
 let history = [];
@@ -19,6 +21,8 @@ function currentElapsed(timer) {
 function connection(ok, message) {
   connected = ok;
   renderDashboard(true);
+  document.querySelectorAll('.planner input:not(#plan-date), .planner button').forEach(el => { el.disabled = !ok; });
+  document.querySelector('#plan-status').textContent = ok ? (pending > 1 ? 'Saving…' : 'Saved · synced') : 'Offline · editing unavailable';
   status.textContent = message || (ok ? 'Synced across devices' : 'Reconnecting… Controls unavailable');
   document.querySelectorAll('.control-bar button:not(#export-data), #one-at-a-time, .timer-card button, .timer-card input').forEach(el => {
     el.disabled = !ok || (el.classList.contains('lap') && !timers.find(t => t.id === el.closest('.timer-card').dataset.id)?.running);
@@ -27,6 +31,8 @@ function connection(ok, message) {
 function accept(data, started) {
   clockOffset = data.serverTime - (started + Date.now()) / 2;
   if (data.version > version) {
+    plans = data.plans || {}; taskCategories = data.taskCategories || [];
+    renderPlanner();
     timers = data.timers; oneAtATime = data.oneAtATime; version = data.version;
     history = data.history || [];
     if ((data.savedSessions || []).length > savedSessions.length) selectedSessionId = data.savedSessions[data.savedSessions.length - 1].id;
@@ -232,3 +238,46 @@ refresh();
 setInterval(refresh, 1000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
 window.addEventListener("online", refresh);
+
+const planDate = document.querySelector('#plan-date');
+planDate.value = SplitboardReporting.dateKey(Date.now());
+const hourLabel = hour => `${hour % 12 || 12}${hour < 12 ? 'am' : 'pm'}`;
+for (let hour = 6; hour < 24; hour++) {
+  const heading = document.createElement('th');
+  heading.scope = 'col'; heading.textContent = hourLabel(hour);
+  heading.title = `${hourLabel(hour)}–${hour === 23 ? '12am' : hourLabel(hour + 1)}`;
+  document.querySelector('#plan-times').append(heading);
+  const cell = document.createElement('td');
+  const input = document.createElement('input');
+  input.dataset.hour = hour; input.maxLength = 200; input.setAttribute('list', 'task-categories');
+  input.setAttribute('aria-label', `Task from ${hourLabel(hour)} to ${hour === 23 ? '12am' : hourLabel(hour + 1)}`);
+  input.placeholder = 'Add task'; input.disabled = true;
+  input.addEventListener('change', () => {
+    document.querySelector('#plan-status').textContent = 'Saving…';
+    dispatch({type: 'plan-task', date: planDate.value, hour, value: input.value});
+  });
+  cell.append(input); document.querySelector('#plan-tasks').append(cell);
+}
+function renderPlanner() {
+  document.querySelectorAll('#plan-tasks input').forEach(input => {
+    if (document.activeElement !== input) input.value = plans[planDate.value]?.[input.dataset.hour] || '';
+  });
+  document.querySelector('#task-categories').replaceChildren(...taskCategories.map(value => {
+    const option = document.createElement('option'); option.value = value; return option;
+  }));
+  const list = document.querySelector('#category-list');
+  list.replaceChildren(...taskCategories.map(value => {
+    const chip = document.createElement('span'); chip.className = 'category-chip'; chip.textContent = value;
+    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '×';
+    remove.setAttribute('aria-label', `Remove category ${value}`);
+    remove.addEventListener('click', () => dispatch({type: 'category-remove', value}));
+    chip.append(remove); return chip;
+  }));
+}
+planDate.addEventListener('change', () => { if (planDate.value) renderPlanner(); });
+document.querySelector('#category-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const input = document.querySelector('#category-name');
+  if (!input.value.trim()) return;
+  dispatch({type: 'category-add', value: input.value}); input.value = '';
+});

@@ -55,3 +55,22 @@ test('Reset all persists lap notes and frozen times for other devices after relo
   await api(post({type:'reset-all',snapshotId:'shared-snapshot'}),env);
   assert.equal((await (await api(get(),env)).json()).savedSessions.length,1);
 });
+
+test('daily plans and categories persist across devices without changing stopwatches', async () => {
+  const env = { DB: new Database() };
+  const initial = await (await api(get(), env)).json();
+  for (const value of ['Study', 'study', 'Exercise']) assert.equal((await api(post({type:'category-add', value}), env)).status, 200);
+  await api(post({type:'plan-task', date:'2026-11-17', hour:6, value:'Study'}), env);
+  await api(post({type:'plan-task', date:'2026-11-18', hour:23, value:'Read a book'}), env);
+  await api(post({type:'category-remove', value:'Study'}), env);
+  let state = await (await api(get(), env)).json();
+  assert.deepEqual(state.taskCategories, ['Exercise']);
+  assert.equal(state.plans['2026-11-17'][6], 'Study');
+  assert.equal(state.plans['2026-11-18'][23], 'Read a book');
+  assert.deepEqual(state.timers, initial.timers);
+  await api(post({type:'plan-task', date:'2026-11-17', hour:6, value:''}), env);
+  state = await (await api(get(), env)).json();
+  assert.equal(state.plans['2026-11-17'], undefined);
+  assert.equal((await api(post({type:'plan-task', date:'bad', hour:6, value:'x'}), env)).status, 400);
+  assert.equal((await api(post({type:'plan-task', date:'2026-11-17', hour:24, value:'x'}), env)).status, 400);
+});

@@ -7,9 +7,9 @@ function display() {
   const callbacks = [];
   const time = { textContent: '' };
   const card = { dataset: { id: 'running' }, querySelector: () => time };
-  const element = { addEventListener() {}, setAttribute() {}, innerHTML: '', textContent: '' };
+  const element = { dataset: {}, append() {}, replaceChildren() {}, addEventListener() {}, setAttribute() {}, innerHTML: '', textContent: '' };
   const context = vm.createContext({
-    document: { querySelector: () => element, querySelectorAll: selector => selector === '.timer-card' ? [card] : [], getElementById: () => element, addEventListener() {} },
+    document: { createElement: () => ({ ...element, dataset: {} }), querySelector: () => element, querySelectorAll: selector => selector === '.timer-card' ? [card] : [], getElementById: () => element, addEventListener() {} },
     window: { addEventListener() {} }, Date: class extends Date { static now() { return now; } },
     fetch: () => new Promise(() => {}), setInterval: (callback, delay) => callbacks.push({ callback, delay })
   });

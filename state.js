@@ -20,6 +20,27 @@
     };
     const reset = t => { log(t); t.elapsed = 0; t.startedAt = t.running ? now : null; t.laps = []; };
     switch (type) {
+      case 'plan-task': {
+        if (typeof command.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(command.date) || !Number.isInteger(command.hour) || command.hour < 6 || command.hour > 23 || typeof command.value !== 'string' || command.value.length > 200) throw Error('Invalid plan');
+        state.plans ??= {};
+        state.plans[command.date] ??= {};
+        if (command.value.trim()) state.plans[command.date][command.hour] = command.value.trim();
+        else delete state.plans[command.date][command.hour];
+        if (!Object.keys(state.plans[command.date]).length) delete state.plans[command.date];
+        break;
+      }
+      case 'category-add':
+      case 'category-remove': {
+        if (typeof command.value !== 'string' || !command.value.trim() || command.value.trim().length > 80) throw Error('Invalid category');
+        state.taskCategories ??= [];
+        const value = command.value.trim();
+        if (type === 'category-remove') state.taskCategories = state.taskCategories.filter(item => item !== value);
+        else if (!state.taskCategories.some(item => item.toLowerCase() === value.toLowerCase())) {
+          if (state.taskCategories.length >= 100) throw Error('Too many categories');
+          state.taskCategories.push(value);
+        }
+        break;
+      }
       case 'start': if (timer) start(timer); break;
       case 'stop': if (timer) stop(timer); break;
       case 'reset': if (timer) reset(timer); break;
